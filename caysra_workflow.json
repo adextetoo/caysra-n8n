@@ -1,0 +1,207 @@
+{
+  "name": "Caysra Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "db_path": "path/to/caysra-n8n/caysra.db",
+        "query_type": "SELECT",
+        "query": "SELECT * FROM predictions ORDER BY created_at DESC LIMIT 3"
+      },
+      "type": "n8n-nodes-sqlite3.SqliteNode",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        80
+      ],
+      "id": "b1c28dcb-2c99-4a3b-a36e-cda1ddca78ac",
+      "name": "Fetch Latest Predictions"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false,
+          "chatIds": "/predict"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        80
+      ],
+      "id": "f81308cb-1eb8-4e3b-a2e5-8d0e81c3e2e5",
+      "name": "Telegram Input",
+      "webhookId": "0ccb8f22-279d-46fa-81bb-f2985176b719",
+      "credentials": {
+        "telegramApi": {
+          "id": "MdP7h1ASUtY7xmBJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "289143360",
+        "text": "=Predictions for {{ $node[\"Fetch Latest Predictions\"].json.map(item => `${item.match}: Home Win ${JSON.parse(item.outcomes).home_win}%, Draw ${JSON.parse(item.outcomes).draw}%, Away Win ${JSON.parse(item.outcomes).away_win}% | Confidence: ${item.confidence}/5 | Factors: ${JSON.parse(item.key_factors).join(', ')} | ${item.narrative}`).join('\\n\\n') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1400,
+        80
+      ],
+      "id": "51f3dd1c-1567-49b9-9963-99628c3d1683",
+      "name": "Send to Telegram",
+      "webhookId": "b3c7ebab-60a3-4fe7-9554-b9c7ebbef1af",
+      "credentials": {
+        "telegramApi": {
+          "id": "MdP7h1ASUtY7xmBJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        80
+      ],
+      "id": "b140d198-7f3a-4b96-9f6e-e3fed6c5faab",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "url": "https://v3.football.api-sports.io/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        80
+      ],
+      "id": "90c2d48b-2c08-4a76-b9a6-641c9e396ebb",
+      "name": "Fetch Matches1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "v6H8bYsVKz3sOsZV",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "python path/to/caysra-n8n/predict.py"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        520,
+        80
+      ],
+      "id": "02d3ded0-b227-4281-93e1-3ccc70c82b5d",
+      "name": "Generate Predictions1"
+    },
+    {
+      "parameters": {
+        "db_path": "path/to/caysra-n8n/caysra.db",
+        "query_type": "INSERT",
+        "query": "INSERT INTO predictions (match, outcomes, confidence, key_factors, narrative) VALUES (?, ?, ?, ?, ?)",
+        "args": "={Map fields from “Generate Predictions” output (match, outcomes as JSON string, confidence, key_factors as JSON string, narrative).}"
+      },
+      "type": "n8n-nodes-sqlite3.SqliteNode",
+      "typeVersion": 1,
+      "position": [
+        740,
+        80
+      ],
+      "id": "d4be3014-7fa8-4320-be6c-154103dded99",
+      "name": "Store Predictions1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Input": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest Predictions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest Predictions": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Matches1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Matches1": {
+      "main": [
+        [
+          {
+            "node": "Generate Predictions1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Predictions1": {
+      "main": [
+        [
+          {
+            "node": "Store Predictions1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "797d2da6-a184-4edf-8707-6e765cafe901",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "273650a26731d145ca3e473d3c0686861a5481bd268e55b3312f812d4239b6a5"
+  },
+  "id": "Oh2Z27xlayjNo3cw",
+  "tags": []
+}
