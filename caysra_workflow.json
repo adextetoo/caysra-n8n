@@ -1,69 +1,6 @@
 {
-  "name": "Caysra Workflow",
+  "name": "caysra_workflow",
   "nodes": [
-    {
-      "parameters": {
-        "db_path": "path/to/caysra-n8n/caysra.db",
-        "query_type": "SELECT",
-        "query": "SELECT * FROM predictions ORDER BY created_at DESC LIMIT 3"
-      },
-      "type": "n8n-nodes-sqlite3.SqliteNode",
-      "typeVersion": 1,
-      "position": [
-        1180,
-        80
-      ],
-      "id": "b1c28dcb-2c99-4a3b-a36e-cda1ddca78ac",
-      "name": "Fetch Latest Predictions"
-    },
-    {
-      "parameters": {
-        "updates": [
-          "message"
-        ],
-        "additionalFields": {
-          "download": false,
-          "chatIds": "/predict"
-        }
-      },
-      "type": "n8n-nodes-base.telegramTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        960,
-        80
-      ],
-      "id": "f81308cb-1eb8-4e3b-a2e5-8d0e81c3e2e5",
-      "name": "Telegram Input",
-      "webhookId": "0ccb8f22-279d-46fa-81bb-f2985176b719",
-      "credentials": {
-        "telegramApi": {
-          "id": "MdP7h1ASUtY7xmBJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "289143360",
-        "text": "=Predictions for {{ $node[\"Fetch Latest Predictions\"].json.map(item => `${item.match}: Home Win ${JSON.parse(item.outcomes).home_win}%, Draw ${JSON.parse(item.outcomes).draw}%, Away Win ${JSON.parse(item.outcomes).away_win}% | Confidence: ${item.confidence}/5 | Factors: ${JSON.parse(item.key_factors).join(', ')} | ${item.narrative}`).join('\\n\\n') }}",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1400,
-        80
-      ],
-      "id": "51f3dd1c-1567-49b9-9963-99628c3d1683",
-      "name": "Send to Telegram",
-      "webhookId": "b3c7ebab-60a3-4fe7-9554-b9c7ebbef1af",
-      "credentials": {
-        "telegramApi": {
-          "id": "MdP7h1ASUtY7xmBJ",
-          "name": "Telegram account"
-        }
-      }
-    },
     {
       "parameters": {
         "rule": {
@@ -77,15 +14,15 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
-        80,
-        80
+        0,
+        0
       ],
-      "id": "b140d198-7f3a-4b96-9f6e-e3fed6c5faab",
-      "name": "Schedule Trigger1"
+      "id": "dccca7a3-664d-47f1-857c-773e4cdde1c0",
+      "name": "Schedule Trigger"
     },
     {
       "parameters": {
-        "url": "https://v3.football.api-sports.io/",
+        "url": "https://api.football-data.org/v4/matches",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -93,50 +30,357 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        300,
-        80
+        220,
+        0
       ],
-      "id": "90c2d48b-2c08-4a76-b9a6-641c9e396ebb",
-      "name": "Fetch Matches1",
+      "id": "4b045c2d-d03e-45ef-a522-a6c811bf7d62",
+      "name": "Fetch Matches",
       "credentials": {
         "httpHeaderAuth": {
-          "id": "v6H8bYsVKz3sOsZV",
+          "id": "9sO4EYnvJOgnEzL4",
           "name": "Header Auth account"
         }
       }
     },
     {
       "parameters": {
-        "command": "python path/to/caysra-n8n/predict.py"
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "https://github.com/adextetoo",
+          "mode": "url"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "caysra-n8n",
+          "mode": "list",
+          "cachedResultName": "caysra-n8n",
+          "cachedResultUrl": "https://github.com/adextetoo/caysra-n8n"
+        },
+        "filePath": "=predictions/{{$today}}.json",
+        "additionalParameters": {}
       },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
       "position": [
-        520,
-        80
+        220,
+        220
       ],
-      "id": "02d3ded0-b227-4281-93e1-3ccc70c82b5d",
-      "name": "Generate Predictions1"
+      "id": "365c6b5c-980d-4651-b194-da1f585fa302",
+      "name": "Fetch Latest Predictions",
+      "webhookId": "a0a42dd5-8db5-467b-ab68-7d186a426c3b",
+      "credentials": {
+        "githubApi": {
+          "id": "Vpwnl4eseeXEqq1H",
+          "name": "GitHub account"
+        }
+      }
     },
     {
       "parameters": {
-        "db_path": "path/to/caysra-n8n/caysra.db",
-        "query_type": "INSERT",
-        "query": "INSERT INTO predictions (match, outcomes, confidence, key_factors, narrative) VALUES (?, ?, ?, ?, ?)",
-        "args": "={Map fields from “Generate Predictions” output (match, outcomes as JSON string, confidence, key_factors as JSON string, narrative).}"
+        "chatId": "289143360",
+        "text": "=Match Predictions:\n{{$node[\"Parse Predictions\"].json.map(item => `${item.match}: Home Win ${item.outcomes.home_win}%, Draw ${item.outcomes.draw}%, Away Win ${item.outcomes.away_win}% | Confidence: ${item.confidence}/5 | Factors: ${item.key_factors.join(', ')} | ${item.narrative}`).join('\\n\\n')}}",
+        "additionalFields": {}
       },
-      "type": "n8n-nodes-sqlite3.SqliteNode",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
-        740,
-        80
+        660,
+        220
       ],
-      "id": "d4be3014-7fa8-4320-be6c-154103dded99",
-      "name": "Store Predictions1"
+      "id": "86b760b2-c213-4cd9-b839-aa0c4636c112",
+      "name": "Send to Telegram",
+      "webhookId": "29eea9dc-2b06-436a-9a5d-7764814b9303",
+      "credentials": {
+        "telegramApi": {
+          "id": "wKvwLyHv7UgZw8Wo",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -40,
+        220
+      ],
+      "id": "c124261e-5237-4bc2-b8d1-81286b569056",
+      "name": "Telegram Input",
+      "webhookId": "df839882-3061-4bd6-90f2-555edcc1f62c",
+      "credentials": {
+        "telegramApi": {
+          "id": "wKvwLyHv7UgZw8Wo",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the matches from the previous node\nconst matches = $node[\"Fetch Matches\"].json.matches || [];\n\n// Function to generate a prediction for a single match\nfunction generatePrediction(match) {\n    const homeTeam = match.homeTeam?.name || \"Unknown\";\n    const awayTeam = match.awayTeam?.name || \"Unknown\";\n    const matchName = `${homeTeam} vs ${awayTeam}`;\n\n    // Mock prediction logic\n    const homeWinProb = Math.random() * (0.7 - 0.3) + 0.3;\n    const drawProb = Math.random() * (0.3 - 0.1) + 0.1;\n    const awayWinProb = 1 - homeWinProb - drawProb;\n\n    const outcomes = {\n        home_win: Math.round(homeWinProb * 100 * 10) / 10,\n        draw: Math.round(drawProb * 100 * 10) / 10,\n        away_win: Math.round(awayWinProb * 100 * 10) / 10\n    };\n\n    const confidence = Math.floor(Math.random() * (5 - 3 + 1)) + 3;\n\n    const keyFactors = [\n        \"Recent home team performance\",\n        \"Away team fatigue from travel\",\n        \"Historical head-to-head results\"\n    ];\n\n    const narrative = `Based on recent performance and historical data, ${homeTeam} has a slight edge due to strong home form.`;\n\n    return {\n        match: matchName,\n        outcomes: outcomes,\n        confidence: confidence,\n        key_factors: keyFactors,\n        narrative: narrative\n    };\n}\n\n// Process all matches and return as objects\nconst predictions = matches.map(generatePrediction);\n\n// Return an array of items with json properties as objects\nreturn predictions.map(prediction => ({ json: prediction }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "f1d794cc-d901-46cd-b528-709cb952b8f8",
+      "name": "Generate Predictions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the predictions from the previous node\nconst predictions = $input.all().map(item => item.json);\n\n// Convert predictions to a formatted JSON string\nconst jsonString = JSON.stringify(predictions, null, 2);\n\n// Return a single item with the JSON string\nreturn [{ json: { content: jsonString } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "f2210d3e-3f13-4893-b2d3-78b4bbe3f995",
+      "name": "Stringify Predictions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the file content from GitHub\nconst content = $node[\"Fetch Latest Predictions\"].json.content;\n\n// Parse the JSON string, with error handling\nlet predictions = [];\ntry {\n    if (content && typeof content === 'string' && content.trim().length > 0) {\n        predictions = JSON.parse(content);\n    } else {\n        throw new Error(\"No valid JSON content found\");\n    }\n} catch (error) {\n    console.error(\"Error parsing JSON:\", error.message);\n    // Return an empty array with a warning\n    return [{ json: { error: \"Failed to parse predictions: \" + error.message } }];\n}\n\n// Return the predictions as items\nreturn predictions.map(prediction => ({ json: prediction }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        220
+      ],
+      "id": "eee62a2b-f89c-4347-a4ab-f1e11e2baf93",
+      "name": "Parse Predictions"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "value": "adextetoo",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "caysra-n8n",
+          "mode": "list",
+          "cachedResultName": "caysra-n8n",
+          "cachedResultUrl": "https://github.com/adextetoo/caysra-n8n"
+        },
+        "filePath": "=predictions/{{$today}}.json",
+        "additionalParameters": {}
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "f8167eec-f4d5-4c82-b144-40c9419f9290",
+      "name": "Get File Metadata",
+      "webhookId": "7fb6cb89-01c8-4e97-a25e-8f6cdc45b1b2",
+      "credentials": {
+        "githubApi": {
+          "id": "Vpwnl4eseeXEqq1H",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$node[\"Get File Metadata\"].json.sha}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "6c7b9e83-8aed-4436-9087-2ed1d9ffcfd5"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "0"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0e2a36ac-80c2-44c5-a1d9-32b9714925d7",
+                    "leftValue": "={{$node[\"Get File Metadata\"].json.sha}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "95faa89c-59de-423b-95df-77ec048f5073",
+      "name": "Check File Exists"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "value": "adextetoo",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "caysra-n8n",
+          "mode": "list",
+          "cachedResultName": "caysra-n8n",
+          "cachedResultUrl": "https://github.com/adextetoo/caysra-n8n"
+        },
+        "filePath": "=predictions/{{$today}}.json",
+        "fileContent": "={{$node[\"Stringify Predictions\"].json.content}}",
+        "commitMessage": "=predictions for {{$today}}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        -100
+      ],
+      "id": "5a879dbc-4353-48a3-a3c2-4f19cfcb065a",
+      "name": "Create File in GitHub",
+      "webhookId": "e6dc7d42-abea-42dd-a7d8-72b954b71f1c",
+      "credentials": {
+        "githubApi": {
+          "id": "Vpwnl4eseeXEqq1H",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "adextetoo",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "caysra-n8n",
+          "mode": "list",
+          "cachedResultName": "caysra-n8n",
+          "cachedResultUrl": "https://github.com/adextetoo/caysra-n8n"
+        },
+        "filePath": "=predictions/{{$today}}.json",
+        "fileContent": "={{$node[\"Stringify Predictions\"].json.content}}",
+        "commitMessage": "prediction"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        100
+      ],
+      "id": "17502707-21e9-4272-8371-90c84ec43715",
+      "name": "GitHub",
+      "webhookId": "7e7303e8-a505-4c1b-a8a4-b6f1fd86edc1",
+      "credentials": {
+        "githubApi": {
+          "id": "Vpwnl4eseeXEqq1H",
+          "name": "GitHub account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Matches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Matches": {
+      "main": [
+        [
+          {
+            "node": "Generate Predictions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest Predictions": {
+      "main": [
+        [
+          {
+            "node": "Parse Predictions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Predictions": {
+      "main": [
+        [
+          {
+            "node": "Stringify Predictions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Telegram Input": {
       "main": [
         [
@@ -148,7 +392,18 @@
         ]
       ]
     },
-    "Fetch Latest Predictions": {
+    "Stringify Predictions": {
+      "main": [
+        [
+          {
+            "node": "Get File Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Predictions": {
       "main": [
         [
           {
@@ -159,33 +414,29 @@
         ]
       ]
     },
-    "Schedule Trigger1": {
+    "Get File Metadata": {
       "main": [
         [
           {
-            "node": "Fetch Matches1",
+            "node": "Check File Exists",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Matches1": {
+    "Check File Exists": {
       "main": [
         [
           {
-            "node": "Generate Predictions1",
+            "node": "Create File in GitHub",
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Generate Predictions1": {
-      "main": [
+        ],
         [
           {
-            "node": "Store Predictions1",
+            "node": "GitHub",
             "type": "main",
             "index": 0
           }
@@ -197,11 +448,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "797d2da6-a184-4edf-8707-6e765cafe901",
+  "versionId": "2c76b5b2-94db-48a9-a607-3cebf116b882",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "273650a26731d145ca3e473d3c0686861a5481bd268e55b3312f812d4239b6a5"
+    "instanceId": "bad1043a19639b8eb550f5dffc7b4aa00f7b40847fbdd5ae051ba5be001c317c"
   },
-  "id": "Oh2Z27xlayjNo3cw",
+  "id": "4oivEa0ZfsRBkM3c",
   "tags": []
 }
