@@ -1,0 +1,17 @@
+[
+  {
+    "match": "Brighton & Hove Albion FC vs Liverpool FC",
+    "outcomes": {
+      "home_win": 41.4,
+      "draw": 20,
+      "away_win": 38.7
+    },
+    "confidence": 3,
+    "key_factors": [
+      "Recent home team performance",
+      "Away team fatigue from travel",
+      "Historical head-to-head results"
+    ],
+    "narrative": "Based on recent performance and historical data, Brighton & Hove Albion FC has a slight edge due to strong home form."
+  }
+]
