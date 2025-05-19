@@ -1,7 +1,9 @@
 import json
 import random
+import sys
 
 def generate_prediction(match_data):
+    # Extract match details from API response
     home_team = match_data.get('homeTeam', {}).get('name', 'Unknown')
     away_team = match_data.get('awayTeam', {}).get('name', 'Unknown')
     match = f"{home_team} vs {away_team}"
@@ -23,7 +25,7 @@ def generate_prediction(match_data):
         "Away team fatigue from travel",
         "Historical head-to-head results"
     ]
-    narrative = f"Based on recent form, {home_team} has a slight edge."
+    narrative = f"Based on recent performance and historical data, {home_team} has a slight edge due to strong home form."
     
     return {
         'match': match,
@@ -34,6 +36,15 @@ def generate_prediction(match_data):
     }
 
 if __name__ == '__main__':
-    input_data = json.loads(input())
-    predictions = [generate_prediction(match) for match in input_data]
-    print(json.dumps(predictions))
+    # Read input from stdin (for n8n or file redirection)
+    input_data = sys.stdin.read()
+    try:
+        # Parse the JSON input
+        data = json.loads(input_data)
+        # Extract matches (handles API response structure)
+        matches = data.get('matches', [])
+        predictions = [generate_prediction(match) for match in matches]
+        print(json.dumps(predictions))
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}", file=sys.stderr)
+        sys.exit(1)
