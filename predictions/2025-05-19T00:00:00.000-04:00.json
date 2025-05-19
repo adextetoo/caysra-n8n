@@ -2,9 +2,9 @@
   {
     "match": "Brighton & Hove Albion FC vs Liverpool FC",
     "outcomes": {
-      "home_win": 30.8,
-      "draw": 30,
-      "away_win": 39.2
+      "home_win": 55.2,
+      "draw": 17.9,
+      "away_win": 26.9
     },
     "confidence": 3,
     "key_factors": [
